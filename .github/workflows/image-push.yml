@@ -1,0 +1,119 @@
+name: Build and Push Images
+
+on:
+  push:
+    branches:
+      - master
+    tags:
+      - 'v*'
+
+defaults:
+  run:
+    shell: 'bash -Eeuo pipefail -x {0}'
+
+jobs:
+  verify-templating:
+    name: Verify Templating
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - run: ./apply-templates.sh
+      - run: git diff --exit-code
+
+  build-image:
+    name: Build and Push Image
+    needs: verify-templating
+    runs-on: ubuntu-latest
+    steps:
+      - name: checkout-repo
+        uses: actions/checkout@v4
+
+      - name: Determine version and registry
+        id: config
+        run: |
+          if [[ "${{ github.ref }}" == refs/heads/master ]]; then
+            VERSION="tip"
+          elif [[ "${{ github.ref }}" == refs/tags/* ]]; then
+            # Extract version from tag (e.g., v1.24 -> 1.24)
+            TAG_NAME="${{ github.ref_name }}"
+            VERSION="${TAG_NAME#v}"
+          else
+            echo "Error: Unexpected ref ${{ github.ref }}"
+            exit 1
+          fi
+          
+          # Verify version exists in versions.json
+          if ! jq -e "has(\"$VERSION\")" versions.json > /dev/null; then
+            echo "Error: Version '$VERSION' not found in versions.json"
+            echo "Available versions:"
+            jq -r 'keys[]' versions.json
+            exit 1
+          fi
+          
+          # Determine registry and image name
+          REGISTRY="${{ secrets.DOCKER_REGISTRY_URL }}"
+          if [ -z "$REGISTRY" ]; then
+            echo "Error: DOCKER_REGISTRY_URL secret is not set"
+            exit 1
+          fi
+          # Remove trailing slash if present
+          REGISTRY="${REGISTRY%/}"
+          
+          # Get image name from secret or use GitHub username as default
+          IMAGE_NAME="${{ secrets.DOCKER_IMAGE_NAME }}"
+          if [ -z "$IMAGE_NAME" ]; then
+            # Default to GitHub username (no organization)
+            IMAGE_NAME="${{ github.actor }}/golang-bullseye"
+          fi
+          
+          # Construct full image tag
+          # For docker.io, don't add prefix (it's the default)
+          if [[ "$REGISTRY" == "docker.io" ]]; then
+            IMAGE_TAG="$IMAGE_NAME:$VERSION"
+          else
+            IMAGE_TAG="$REGISTRY/$IMAGE_NAME:$VERSION"
+          fi
+          
+          echo "version=$VERSION" >> $GITHUB_OUTPUT
+          echo "registry=$REGISTRY" >> $GITHUB_OUTPUT
+          echo "image_tag=$IMAGE_TAG" >> $GITHUB_OUTPUT
+          echo "Building version: $VERSION"
+          echo "Using registry: $REGISTRY"
+          echo "Image tag: $IMAGE_TAG"
+
+      - name: Generate Dockerfiles
+        run: ./apply-templates.sh
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Build image
+        uses: docker/build-push-action@v5
+        with:
+          context: ${{ steps.config.outputs.version }}/bullseye
+          file: ${{ steps.config.outputs.version }}/bullseye/Dockerfile
+          tags: ${{ steps.config.outputs.image_tag }}
+          push: false
+          load: true
+
+      - name: Smoke test
+        run: |
+          image="${{ steps.config.outputs.image_tag }}"
+          echo "Testing $image..."
+          docker run --rm "$image" go version
+          echo "Image golang-bullseye smoke test passed"
+
+      - name: Login to registry
+        uses: docker/login-action@v3
+        with:
+          registry: ${{ steps.config.outputs.registry }}
+          username: ${{ secrets.DOCKER_REGISTRY_USERNAME }}
+          password: ${{ secrets.DOCKER_REGISTRY_PASSWORD }}
+
+      - name: Push image
+        uses: docker/build-push-action@v5
+        with:
+          context: ${{ steps.config.outputs.version }}/bullseye
+          file: ${{ steps.config.outputs.version }}/bullseye/Dockerfile
+          tags: ${{ steps.config.outputs.image_tag }}
+          push: true
