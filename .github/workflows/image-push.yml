@@ -3,9 +3,12 @@ name: Build and Push Images
 on:
   push:
     branches:
-      - master
+      - main
     tags:
       - 'v*'
+
+env:
+  DOCKER_REGISTRY_REPO: "mattermost/golang-bullseye"      
 
 defaults:
   run:
@@ -14,24 +17,24 @@ defaults:
 jobs:
   verify-templating:
     name: Verify Templating
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-22.04
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8 # v5.0.0
       - run: ./apply-templates.sh
       - run: git diff --exit-code
 
   build-image:
     name: Build and Push Image
     needs: verify-templating
-    runs-on: ubuntu-latest
+    runs-on: delivery-runners
     steps:
       - name: checkout-repo
-        uses: actions/checkout@v4
+        uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8 # v5.0.0
 
       - name: Determine version and registry
         id: config
         run: |
-          if [[ "${{ github.ref }}" == refs/heads/master ]]; then
+          if [[ "${{ github.ref }}" == refs/heads/main ]]; then
             VERSION="tip"
           elif [[ "${{ github.ref }}" == refs/tags/* ]]; then
             # Extract version from tag (e.g., v1.24 -> 1.24)
@@ -48,72 +51,43 @@ jobs:
             echo "Available versions:"
             jq -r 'keys[]' versions.json
             exit 1
-          fi
-          
-          # Determine registry and image name
-          REGISTRY="${{ secrets.DOCKER_REGISTRY_URL }}"
-          if [ -z "$REGISTRY" ]; then
-            echo "Error: DOCKER_REGISTRY_URL secret is not set"
-            exit 1
-          fi
-          # Remove trailing slash if present
-          REGISTRY="${REGISTRY%/}"
-          
-          # Get image name from secret or use GitHub username as default
-          IMAGE_NAME="${{ secrets.DOCKER_IMAGE_NAME }}"
-          if [ -z "$IMAGE_NAME" ]; then
-            # Default to GitHub username (no organization)
-            IMAGE_NAME="${{ github.actor }}/golang-bullseye"
-          fi
-          
-          # Construct full image tag
-          # For docker.io, don't add prefix (it's the default)
-          if [[ "$REGISTRY" == "docker.io" ]]; then
-            IMAGE_TAG="$IMAGE_NAME:$VERSION"
-          else
-            IMAGE_TAG="$REGISTRY/$IMAGE_NAME:$VERSION"
-          fi
+          fi        
           
           echo "version=$VERSION" >> $GITHUB_OUTPUT
-          echo "registry=$REGISTRY" >> $GITHUB_OUTPUT
-          echo "image_tag=$IMAGE_TAG" >> $GITHUB_OUTPUT
           echo "Building version: $VERSION"
-          echo "Using registry: $REGISTRY"
-          echo "Image tag: $IMAGE_TAG"
 
       - name: Generate Dockerfiles
         run: ./apply-templates.sh
 
       - name: Set up Docker Buildx
-        uses: docker/setup-buildx-action@v3
+        uses: docker/setup-buildx-action@e468171a9de216ec08956ac3ada2f0791b6bd435 # v3.11.1
 
       - name: Build image
-        uses: docker/build-push-action@v5
+        uses: docker/build-push-action@263435318d21b8e681c14492fe198d362a7d2c83 # v6.18.0
         with:
           context: ${{ steps.config.outputs.version }}/bullseye
           file: ${{ steps.config.outputs.version }}/bullseye/Dockerfile
-          tags: ${{ steps.config.outputs.image_tag }}
+          tags: ${{ env.DOCKER_REGISTRY_REPO }}:${{ steps.config.outputs.version }}
           push: false
           load: true
 
       - name: Smoke test
         run: |
-          image="${{ steps.config.outputs.image_tag }}"
+          image="${{ env.DOCKER_REGISTRY_REPO }}:${{ steps.config.outputs.version }}"
           echo "Testing $image..."
           docker run --rm "$image" go version
           echo "Image golang-bullseye smoke test passed"
 
       - name: Login to registry
-        uses: docker/login-action@v3
+        uses: docker/login-action@184bdaa0721073962dff0199f1fb9940f07167d1 # v3.5.0
         with:
-          registry: ${{ steps.config.outputs.registry }}
-          username: ${{ secrets.DOCKER_REGISTRY_USERNAME }}
-          password: ${{ secrets.DOCKER_REGISTRY_PASSWORD }}
+          username: matterbuild
+          password: ${{ secrets.DOCKERHUB_TOKEN }}
 
       - name: Push image
-        uses: docker/build-push-action@v5
+        uses: docker/build-push-action@263435318d21b8e681c14492fe198d362a7d2c83 # v6.18.0
         with:
           context: ${{ steps.config.outputs.version }}/bullseye
           file: ${{ steps.config.outputs.version }}/bullseye/Dockerfile
-          tags: ${{ steps.config.outputs.image_tag }}
+          tags: ${{ env.DOCKER_REGISTRY_REPO }}:${{ steps.config.outputs.version }}
           push: true

@@ -47,14 +47,12 @@ This script builds the images locally and runs the same tests as the CI workflow
 ### Publishing Images
 
 Configure GitHub Secrets:
-- `DOCKER_REGISTRY_URL` - Your registry URL (e.g., `ghcr.io`, `registry.example.com`, `docker.io`)
-- `DOCKER_REGISTRY_USERNAME` - Registry username
-- `DOCKER_REGISTRY_PASSWORD` - Registry password/token
-- `DOCKER_IMAGE_NAME` (optional) - Image name/namespace (e.g., `myorg/golang-bullseye`). Defaults to `$GITHUB_ACTOR/golang-bullseye` (your GitHub username) if not set.
+- `DOCKERHUB_TOKEN` - Registry password/token
 
-Images are automatically built, tested, and published:
-- **Push to `main`**: Builds and publishes the `tip` version (e.g., `<registry>/<image>:tip`)
-- **Push tag `vX.Y`**: Builds and publishes that version (e.g., tag `v1.24` → `<registry>/<image>:1.24`)
+Images are built, tested and published to Docker Hub as `mattermost/golang-bullseye`
+
+- **Push to `main`**: Builds and publishes the `tip` version (e.g., `mattermost/golang-bullseye:tip`)
+- **Push tag `vX.Y`**: Builds and publishes that version (e.g., tag `v1.24` → `mattermost/golang-bullseye:1.24`)
 
 The tag must match a key in `versions.json` (e.g., `v1.24` requires a `"1.24"` entry).
 
