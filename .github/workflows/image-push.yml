@@ -37,22 +37,29 @@ jobs:
           if [[ "${{ github.ref }}" == refs/heads/main ]]; then
             VERSION="tip"
           elif [[ "${{ github.ref }}" == refs/tags/* ]]; then
-            # Extract version from tag (e.g., v1.24 -> 1.24)
+            # Extract full version from tag (e.g., v1.24.10 -> 1.24.10)
             TAG_NAME="${{ github.ref_name }}"
             VERSION="${TAG_NAME#v}"
           else
             echo "Error: Unexpected ref ${{ github.ref }}"
             exit 1
           fi
+
+          # Look for existing major_minor version in versions.json
+          if [[ "$VERSION" == "tip" ]]; then
+            MAJOR_MINOR="$VERSION"
+          else
+            MAJOR_MINOR=$(jq -r --arg v "$VERSION" 'to_entries[] | select(.value.version == $v) | .key' versions.json)
+            # Verify version exists in versions.json
+            if [[ -z "$MAJOR_MINOR" ]]; then
+              echo "Error: Version '$VERSION' not found in versions.json"
+              echo "Available versions:"
+              jq -r 'to_entries[] | if .key == "tip" then "tip" else .value.version end' versions.json              
+              exit 1
+            fi
+          fi
           
-          # Verify version exists in versions.json
-          if ! jq -e "has(\"$VERSION\")" versions.json > /dev/null; then
-            echo "Error: Version '$VERSION' not found in versions.json"
-            echo "Available versions:"
-            jq -r 'keys[]' versions.json
-            exit 1
-          fi        
-          
+          echo "major_minor=$MAJOR_MINOR" >> $GITHUB_OUTPUT
           echo "version=$VERSION" >> $GITHUB_OUTPUT
           echo "Building version: $VERSION"
 
@@ -65,8 +72,8 @@ jobs:
       - name: Build image
         uses: docker/build-push-action@263435318d21b8e681c14492fe198d362a7d2c83 # v6.18.0
         with:
-          context: ${{ steps.config.outputs.version }}/bullseye
-          file: ${{ steps.config.outputs.version }}/bullseye/Dockerfile
+          context: ${{ steps.config.outputs.major_minor }}/bullseye
+          file: ${{ steps.config.outputs.major_minor }}/bullseye/Dockerfile
           tags: ${{ env.DOCKER_REGISTRY_REPO }}:${{ steps.config.outputs.version }}
           push: false
           load: true
@@ -87,7 +94,7 @@ jobs:
       - name: Push image
         uses: docker/build-push-action@263435318d21b8e681c14492fe198d362a7d2c83 # v6.18.0
         with:
-          context: ${{ steps.config.outputs.version }}/bullseye
-          file: ${{ steps.config.outputs.version }}/bullseye/Dockerfile
+          context: ${{ steps.config.outputs.major_minor }}/bullseye
+          file: ${{ steps.config.outputs.major_minor }}/bullseye/Dockerfile
           tags: ${{ env.DOCKER_REGISTRY_REPO }}:${{ steps.config.outputs.version }}
           push: true

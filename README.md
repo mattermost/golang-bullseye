@@ -52,9 +52,9 @@ Configure GitHub Secrets:
 Images are built, tested and published to Docker Hub as `mattermost/golang-bullseye`
 
 - **Push to `main`**: Builds and publishes the `tip` version (e.g., `mattermost/golang-bullseye:tip`)
-- **Push tag `vX.Y`**: Builds and publishes that version (e.g., tag `v1.24` → `mattermost/golang-bullseye:1.24`)
+- **Push tag `vX.Y.Z`**: Builds and publishes that version (e.g., tag `v1.24.10` → `mattermost/golang-bullseye:1.24.10`)
 
-The tag must match a key in `versions.json` (e.g., `v1.24` requires a `"1.24"` entry).
+The tag must match a `version` field in `versions.json` (e.g., `v1.24.10` requires existing `"1.24": { "version": "1.24.10", ... }`).
 
 ## Attribution
 
