@@ -90,11 +90,21 @@ for version in "${versions[@]}"; do
 
 	case "$version" in
 		tip)
+			# Script requires GNU date for "tip". On macOS, use gdate from coreutils.
+			if [ "$(uname -s)" = "Darwin" ]; then
+				if ! command -v gdate &>/dev/null; then
+					echo >&2 "error: On macOS, updating 'tip' requires GNU date. Install with: brew install coreutils"
+					exit 1
+				fi
+				DATE_CMD=gdate
+			else
+				DATE_CMD=date
+			fi
 			# clamp so we don't update too frequently (https://github.com/docker-library/golang/issues/464#issuecomment-1587758290, https://github.com/docker-library/faq#can-i-use-a-bot-to-make-my-image-update-prs)
 			# https://github.com/golang/go
 			# https://go.googlesource.com/go
-			snapshotDate="$(date --utc --date 'last sunday 23:59:59 UTC + 1 second' '+%s')"
-			snapshotDateStr="$(date --utc --date "@$snapshotDate" '+%Y-%m-%d @ %H:%M:%S')"
+			snapshotDate="$($DATE_CMD --utc --date 'last sunday 23:59:59 UTC + 1 second' '+%s')"
+			snapshotDateStr="$($DATE_CMD --utc --date "@$snapshotDate" '+%Y-%m-%d @ %H:%M:%S')"
 			commit='HEAD' # this is also our iteration variable, so if we don't find a suitable commit each time through this loop, we'll use the last commit of the previous list to get a list of new (older) commits until we find one suitably old enough
 			fullVersion=
 			date=
@@ -119,7 +129,7 @@ for version in "${versions[@]}"; do
 					commit="${commitDate%%[[:space:]]*}"
 					date="${commitDate#$commit[[:space:]]}"
 					[ "$commit" != "$date" ] # sanity check
-					date="$(date --utc --date "$date" '+%s')"
+					date="$($DATE_CMD --utc --date "$date" '+%s')"
 					if [ "$date" -le "$snapshotDate" ]; then
 						fullVersion="$commit"
 						break 2
@@ -132,7 +142,7 @@ for version in "${versions[@]}"; do
 			fi
 			[ "$commit" = "$fullVersion" ]
 			[ -n "$date" ]
-			fullVersion="$(date --utc --date "@$date" '+%Y%m%d')"
+			fullVersion="$($DATE_CMD --utc --date "@$date" '+%Y%m%d')"
 			url="https://github.com/golang/go/archive/$commit.tar.gz"
 			sha256= # TODO "$(wget -qO- "$url" | sha256sum | cut -d' ' -f1)" # 😭 (this is not fast)
 			goJson="$(
