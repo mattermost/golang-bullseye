@@ -8,7 +8,7 @@ FROM buildpack-deps:bullseye-scm AS build
 
 ENV PATH /usr/local/go/bin:$PATH
 
-ENV GOLANG_VERSION 1.24.11
+ENV GOLANG_VERSION 1.24.13
 
 RUN set -eux; \
 	now="$(date '+%s')"; \
@@ -16,36 +16,36 @@ RUN set -eux; \
 	url=; \
 	case "$arch" in \
 		'amd64') \
-			url='https://dl.google.com/go/go1.24.11.linux-amd64.tar.gz'; \
-			sha256='bceca00afaac856bc48b4cc33db7cd9eb383c81811379faed3bdbc80edb0af65'; \
+			url='https://dl.google.com/go/go1.24.13.linux-amd64.tar.gz'; \
+			sha256='1fc94b57134d51669c72173ad5d49fd62afb0f1db9bf3f798fd98ee423f8d730'; \
 			;; \
 		'armhf') \
-			url='https://dl.google.com/go/go1.24.11.linux-armv6l.tar.gz'; \
-			sha256='24d712a7e8ea2f429c05bc67287249e0291f2fe0ea6d6ff268f11b7343ad0f47'; \
+			url='https://dl.google.com/go/go1.24.13.linux-armv6l.tar.gz'; \
+			sha256='a26b1e54c0fe7b0babc79716a89b830f1cde54f6c6f914a9995d3f0d0bdd0242'; \
 			;; \
 		'arm64') \
-			url='https://dl.google.com/go/go1.24.11.linux-arm64.tar.gz'; \
-			sha256='beaf0f51cbe0bd71b8289b2b6fa96c0b11cd86aa58672691ef2f1de88eb621de'; \
+			url='https://dl.google.com/go/go1.24.13.linux-arm64.tar.gz'; \
+			sha256='74d97be1cc3a474129590c67ebf748a96e72d9f3a2b6fef3ed3275de591d49b3'; \
 			;; \
 		'i386') \
-			url='https://dl.google.com/go/go1.24.11.linux-386.tar.gz'; \
-			sha256='bb702d0b67759724dccee1825828e8bae0b5199e3295cac5a98a81f3098fa64a'; \
+			url='https://dl.google.com/go/go1.24.13.linux-386.tar.gz'; \
+			sha256='a55cb4587b1face90dc9334d8ad44ccd41fade77dcff645a74927eb0adc52272'; \
 			;; \
 		'mips64el') \
-			url='https://dl.google.com/go/go1.24.11.linux-mips64le.tar.gz'; \
-			sha256='c0274255613b85e2ba45e210e8f07995d51a048f11c7f0b9128dc177472692b3'; \
+			url='https://dl.google.com/go/go1.24.13.linux-mips64le.tar.gz'; \
+			sha256='d1c233a227fd4c5be04d4e8929b4b75e7237556916b8295c0436a1301af8ea12'; \
 			;; \
 		'ppc64el') \
-			url='https://dl.google.com/go/go1.24.11.linux-ppc64le.tar.gz'; \
-			sha256='f770d0c5d7e7e2edb030133ac7854d9204f4e954e79a176e81362ffedf6ea34c'; \
+			url='https://dl.google.com/go/go1.24.13.linux-ppc64le.tar.gz'; \
+			sha256='5f0dfab58ce15a84d824363c041246c76847a69d14f9ffac16bd5342299ecc14'; \
 			;; \
 		'riscv64') \
-			url='https://dl.google.com/go/go1.24.11.linux-riscv64.tar.gz'; \
-			sha256='9db9ba8e6b60f3662f55ed78b128175edbe8b9480e657126a5b8f5043ee1e38c'; \
+			url='https://dl.google.com/go/go1.24.13.linux-riscv64.tar.gz'; \
+			sha256='9a8166261489d3f38c7a568785b7012c123e3561779d282d568a72d58506754f'; \
 			;; \
 		's390x') \
-			url='https://dl.google.com/go/go1.24.11.linux-s390x.tar.gz'; \
-			sha256='5955ddda3445b2cbfd81b8772044084911f55d0baeb32414da0411f6a377a2d4'; \
+			url='https://dl.google.com/go/go1.24.13.linux-s390x.tar.gz'; \
+			sha256='a3e3e2012f9b4d392fab85fd4596bbd798ea8e0ceba259f47023b8cb5ebfffc1'; \
 			;; \
 		*) echo >&2 "error: unsupported architecture '$arch' (likely packaging update needed)"; exit 1 ;; \
 	esac; \
@@ -124,7 +124,7 @@ RUN set -eux; \
 	fi; \
 	rm -rf /var/lib/apt/lists/*
 
-ENV GOLANG_VERSION 1.24.11
+ENV GOLANG_VERSION 1.24.13
 
 # don't auto-upgrade the gotoolchain
 # https://github.com/docker-library/golang/issues/472
