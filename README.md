@@ -22,6 +22,11 @@ This is a simplified fork of the [docker-library/golang](https://github.com/dock
 
 This will generate proper Dockerfile files according to what's configured in `versions.json`
 
+> **macOS prerequisite**: the scripts require `gawk` and (for `tip` updates) GNU `date`:
+> ```bash
+> brew install gawk coreutils
+> ```
+
 ```bash
 # Update versions.json from upstream and generate all Dockerfiles
 ./update.sh
