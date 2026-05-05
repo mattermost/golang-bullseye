@@ -33,15 +33,7 @@ To add a brand-new major version (e.g., 1.26 for the first time), pass its major
 
 - **Branch name**: `update-go-X.Y.Z` (e.g., `update-go-1.26.2`)
 - **Commit/PR title**: `go X.Y.Z update` (lowercase, no period)
-- **PR body**:
-
-```
-#### Summary
-<one sentence describing what changed>
-
-#### Ticket Link
-https://mattermost.atlassian.net/browse/MM-XXXXX
-```
+- **PR body**: populated automatically from `.github/PULL_REQUEST_TEMPLATE.md`
 
 Create PRs as **draft** by default.
 
