@@ -35,8 +35,6 @@ To add a brand-new major version (e.g., 1.26 for the first time), pass its major
 - **Commit/PR title**: `go X.Y.Z update` (lowercase, no period)
 - **PR body**: populated automatically from `.github/PULL_REQUEST_TEMPLATE.md`
 
-Create PRs as **draft** by default.
-
 ## What the scripts do
 
 | Script | Purpose |
