@@ -22,6 +22,8 @@ potentiallySupportedArches="$(jq -sRc <<<"${potentiallySupportedArches[*]}" 'rtr
 
 cd "$(dirname "$(readlink -f "$BASH_SOURCE")")"
 
+existingTipBootstrap="$(jq -r '.bootstrap // empty' tip-config.json 2>/dev/null || true)"
+
 versions=( "$@" )
 if [ ${#versions[@]} -eq 0 ]; then
 	versions=( */ )
@@ -162,6 +164,9 @@ for version in "${versions[@]}"; do
 					}
 				'
 			)"
+			if [ -n "$existingTipBootstrap" ]; then
+				goJson="$(jq -c --arg bootstrap "$existingTipBootstrap" '.bootstrap = $bootstrap' <<<"$goJson")"
+			fi
 			;;
 
 		*)
@@ -191,6 +196,7 @@ for version in "${versions[@]}"; do
 	doc="$(jq <<<"$goJson" -c --argjson potentiallySupportedArches "$potentiallySupportedArches" '
 	{
 		version: .version,
+		bootstrap: .bootstrap,
 		commit: .commit,
 		date: .date,
 		arches: (
