@@ -11,8 +11,8 @@ ENV PATH /usr/local/go/bin:$PATH
 # bootstrap must satisfy the minimum Go version required to build this tip commit
 COPY --from=golang:1.26 /usr/local/go /usr/local/goroot-bootstrap
 
-# tip-20260619: https://github.com/golang/go/tree/fd6f414c65e61a51cf12c98ef473957d73f97c44
-ARG GOLANG_COMMIT='fd6f414c65e61a51cf12c98ef473957d73f97c44'
+# tip-20260815: https://github.com/golang/go/tree/72aa6db7943024b48c4d41c1fbc32b57b9fa036e
+ARG GOLANG_COMMIT='72aa6db7943024b48c4d41c1fbc32b57b9fa036e'
 ENV GOLANG_COMMIT $GOLANG_COMMIT
 
 RUN set -eux; \
