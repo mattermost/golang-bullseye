@@ -8,7 +8,8 @@ FROM buildpack-deps:bullseye-scm AS build
 
 ENV PATH /usr/local/go/bin:$PATH
 
-COPY --from=golang:bullseye /usr/local/go /usr/local/goroot-bootstrap
+# bootstrap must satisfy the minimum Go version required to build this tip commit
+COPY --from=golang:1.26 /usr/local/go /usr/local/goroot-bootstrap
 
 # tip-20260619: https://github.com/golang/go/tree/fd6f414c65e61a51cf12c98ef473957d73f97c44
 ARG GOLANG_COMMIT='fd6f414c65e61a51cf12c98ef473957d73f97c44'
