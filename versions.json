@@ -1180,6 +1180,7 @@
   },
   "tip": {
     "version": "tip-20260619",
+    "bootstrap": "1.26",
     "commit": {
       "version": "fd6f414c65e61a51cf12c98ef473957d73f97c44"
     },
