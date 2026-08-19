@@ -5,7 +5,8 @@ ENV PATH /usr/local/go/bin:$PATH
 {{ if env.version != "tip" then ( -}}
 ENV GOLANG_VERSION {{ .version }}
 {{ ) else ( -}}
-COPY --from=golang:{{ env.variant }} /usr/local/go /usr/local/goroot-bootstrap
+# bootstrap must satisfy the minimum Go version required to build this tip commit
+COPY --from=golang:{{ .bootstrap }} /usr/local/go /usr/local/goroot-bootstrap
 
 # {{ .version }}: https://github.com/golang/go/tree/{{ .commit.version }}
 ARG GOLANG_COMMIT={{ .commit.version | @sh }}
