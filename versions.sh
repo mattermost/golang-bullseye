@@ -22,7 +22,12 @@ potentiallySupportedArches="$(jq -sRc <<<"${potentiallySupportedArches[*]}" 'rtr
 
 cd "$(dirname "$(readlink -f "$BASH_SOURCE")")"
 
-existingTipBootstrap="$(jq -r '.bootstrap // empty' tip-config.json 2>/dev/null || true)"
+if ! existingTipBootstrap="$(
+	jq -er '.bootstrap | strings | select(length > 0)' tip-config.json
+)"; then
+	echo 'tip-config.json must contain a non-empty "bootstrap" string' >&2
+	exit 1
+fi
 
 versions=( "$@" )
 if [ ${#versions[@]} -eq 0 ]; then
