@@ -106,6 +106,8 @@ FROM buildpack-deps:bullseye-scm
 
 # install cgo-related dependencies
 RUN set -eux; \
+# bullseye is EOL and its packages have been removed from deb.debian.org, so use the archive
+	sed -i -E 's#https?://deb\.debian\.org/debian-security#https://archive.debian.org/debian-security#; s#https?://deb\.debian\.org/debian#https://archive.debian.org/debian#' /etc/apt/sources.list; \
 	apt-get update; \
 	apt-get install -y --no-install-recommends \
 		g++ \
